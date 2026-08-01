@@ -22,7 +22,7 @@ Official tags like `oraclelinux:8.10` or `oraclelinux:9.5` **do not exist** or a
 This repository addresses the problem by:
 - Reading download URLs from **`releases.txt`** (extracted from `/root/lima` git history).
 - Downloading official Oracle Linux QCOW/QCOW2 templates.
-- Mounting QCOW disk images via `qemu-nbd` and LVM kernel modules.
+- Mounting QCOW/QCOW2 disk images via `qemu-nbd` and LVM kernel modules.
 - Dynamically detecting root file systems by verifying `/etc/oracle-release` or `/etc/os-release`.
 - Exporting container rootfs archives and importing them into Docker.
 - Automatically publishing ready-to-use Docker images to Docker Hub: **`runalsh/oraclelinux-patch`**.
@@ -33,13 +33,13 @@ This repository addresses the problem by:
 
 ### Oracle Linux 8
 
-| Tag | Version in `/etc/oracle-release` | Download QCOW Template |
+| Tag | Version in `/etc/oracle-release` | Download QCOW/QCOW2 Template |
 |---|---|---|
 | `runalsh/oraclelinux-patch:8.10` | `Oracle Linux Server release 8.10` | `OL8U10_x86_64-kvm-b287.qcow2` |
 
 ### Oracle Linux 9
 
-| Tag | Version in `/etc/oracle-release` | Download QCOW Template |
+| Tag | Version in `/etc/oracle-release` | Download QCOW/QCOW2 Template |
 |---|---|---|
 | `runalsh/oraclelinux-patch:9.0` | `Oracle Linux Server release 9.0` | `OL9U0_x86_64-kvm-b138.qcow` |
 | `runalsh/oraclelinux-patch:9.1` | `Oracle Linux Server release 9.1` | `OL9U1_x86_64-kvm-b158.qcow` |
