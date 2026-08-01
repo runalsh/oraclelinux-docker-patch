@@ -1,5 +1,5 @@
 8.10 https://yum.oracle.com/templates/OracleLinux/OL8/u10/x86_64/OL8U10_x86_64-kvm-b287.qcow2
-9.0 https://yum.oracle.com/templates/OracleLinux/OL9/u0/x86_64/OL9U0_x86_64-kvm-b138.qcow
+9 https://yum.oracle.com/templates/OracleLinux/OL9/u0/x86_64/OL9U0_x86_64-kvm-b138.qcow
 9.1 https://yum.oracle.com/templates/OracleLinux/OL9/u1/x86_64/OL9U1_x86_64-kvm-b158.qcow
 9.2 https://yum.oracle.com/templates/OracleLinux/OL9/u2/x86_64/OL9U2_x86_64-kvm-b197.qcow
 9.3 https://yum.oracle.com/templates/OracleLinux/OL9/u3/x86_64/OL9U3_x86_64-kvm-b211.qcow
