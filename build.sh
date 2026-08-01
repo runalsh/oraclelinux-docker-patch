@@ -75,8 +75,14 @@ while read -r tag url || [ -n "$tag" ]; do
     echo "1. Downloading VMDK image..."
     curl -fSL -o "${VMDK_FILE}" "${url}"
 
+    ABS_VMDK_FILE="$(cd "$(dirname "${VMDK_FILE}")" && pwd)/$(basename "${VMDK_FILE}")"
+    ABS_OUTPUT_DIR="$(mkdir -p "${OUTPUT_DIR}" && cd "${OUTPUT_DIR}" && pwd)"
+
     echo "2. Converting VMDK to Docker tar archive using ova-to-docker..."
-    echo "y" | python3 "${CONVERTER_SCRIPT}" --input "${VMDK_FILE}" --output "${OUTPUT_DIR}" || true
+    (
+        cd "${CONVERTER_DIR}"
+        echo "y" | python3 "${CONVERTER_SCRIPT}" --input "${ABS_VMDK_FILE}" --output "${ABS_OUTPUT_DIR}" || true
+    )
 
     TAR_FILE=$(find "${OUTPUT_DIR}" -name "*.tar.gz" -o -name "*.tar" | head -n 1)
 
