@@ -81,7 +81,7 @@ while read -r tag url || [ -n "$tag" ]; do
     echo "2. Converting VMDK to Docker tar archive using ova-to-docker..."
     (
         cd "${CONVERTER_DIR}"
-        echo "y" | python3 "${CONVERTER_SCRIPT}" --input "${ABS_VMDK_FILE}" --output "${ABS_OUTPUT_DIR}" || true
+        yes "y" | python3 "${CONVERTER_SCRIPT}" --input "${ABS_VMDK_FILE}" --output "${ABS_OUTPUT_DIR}" || true
     )
 
     TAR_FILE=$(find "${OUTPUT_DIR}" -name "*.tar.gz" -o -name "*.tar" | head -n 1)
