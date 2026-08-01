@@ -28,9 +28,11 @@ if [ ! -f "$RELEASES_FILE" ]; then
     exit 1
 fi
 
+mkdir -p trivy-reports
+
 sudo modprobe nbd max_part=16 2>/dev/null || true
 
-echo "Starting QCOW2 -> Docker build process for repository: ${IMAGE_NAME}"
+echo "Starting QCOW/QCOW2 -> Docker build process for repository: ${IMAGE_NAME}"
 
 while read -r tag url || [ -n "$tag" ]; do
     [[ -z "$tag" || "$tag" =~ ^# ]] && continue
@@ -134,14 +136,22 @@ while read -r tag url || [ -n "$tag" ]; do
         echo "$RELEASE_INFO"
     fi
 
-    if [ "${PUSH_TO_DOCKERHUB:-false}" = "true" ]; then
-        echo "8. Pushing image to Docker Hub..."
-        docker push "${FULL_IMAGE_TAG}"
-    else
-        echo "8. Skipping Docker Hub push."
+    if command -v trivy &>/dev/null || [ "${ENABLE_TRIVY_SCAN:-false}" = "true" ]; then
+        echo "8. Generating SBOM and scanning vulnerabilities with Trivy..."
+        trivy image --format spdx-json --output "trivy-reports/sbom-${tag}.json" "${FULL_IMAGE_TAG}" 2>/dev/null || true
+        echo "--- Trivy Vulnerability Report for ${FULL_IMAGE_TAG} ---"
+        trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL "${FULL_IMAGE_TAG}" || true
+        echo "--------------------------------------------------------"
     fi
 
-    echo "9. Cleaning up temporary mounts and files..."
+    if [ "${PUSH_TO_DOCKERHUB:-false}" = "true" ]; then
+        echo "9. Pushing image to Docker Hub..."
+        docker push "${FULL_IMAGE_TAG}"
+    else
+        echo "9. Skipping Docker Hub push."
+    fi
+
+    echo "10. Cleaning up temporary mounts and files..."
     sudo umount "${MOUNT_DIR}" 2>/dev/null || true
     sudo vgchange -an 2>/dev/null || true
     sudo qemu-nbd -d /dev/nbd0 2>/dev/null || true

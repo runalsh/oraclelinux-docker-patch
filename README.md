@@ -24,6 +24,7 @@ This repository addresses the problem by:
 - Downloading official Oracle Linux QCOW/QCOW2 templates.
 - Mounting QCOW/QCOW2 disk images via `qemu-nbd` and LVM kernel modules.
 - Dynamically detecting root file systems by verifying `/etc/oracle-release` or `/etc/os-release`.
+- Generating SPDX SBOM files and scanning for vulnerabilities using **Trivy** without blocking the pipeline.
 - Exporting container rootfs archives and importing them into Docker.
 - Automatically publishing ready-to-use Docker images to Docker Hub: **`runalsh/oraclelinux-patch`**.
 
@@ -86,6 +87,15 @@ The `build.sh` script supports the following configuration environment variables
 | `PUSH_TO_DOCKERHUB` | `false` | When set to `true`, automatically pushes built images to Docker Hub (`runalsh/oraclelinux-patch:<tag>`). |
 | `CLEANUP_DOCKER_IMAGES` | `false` | When set to `true`, deletes the local Docker image (`docker rmi`) after build and push to conserve disk space. |
 | `SKIP_EXISTS_CHECK` | `false` | When set to `false`, checks if the image tag already exists on Docker Hub and skips download/conversion if present. Set to `true` to force building all tags regardless of Docker Hub status. |
+| `ENABLE_TRIVY_SCAN` | `false` | When set to `true` (or when `trivy` binary is present), generates SPDX SBOM reports (`trivy-reports/sbom-<tag>.json`) and logs vulnerabilities to stdout without failing the build pipeline (`--exit-code 0`). |
+
+---
+
+## 🛡 Security & Trivy Scanning
+
+During build execution, images are scanned using [Trivy](https://github.com/aquasecurity/trivy):
+- **SBOM Generation**: Exported in SPDX-JSON format (`trivy-reports/sbom-<tag>.json`) and saved to GitHub Actions Job Artifacts (`oraclelinux-sbom-reports`).
+- **Vulnerability Logging**: Vulnerabilities (UNKNOWN, LOW, MEDIUM, HIGH, CRITICAL) are logged to build stdout. Scans execute with `--exit-code 0`, ensuring pipeline continuity regardless of identified CVEs.
 
 ---
 
@@ -94,7 +104,7 @@ The `build.sh` script supports the following configuration environment variables
 ```text
 .
 ├── .github/workflows/
-│   └── build-and-push.yml  # Automated CI pipeline for building, testing, and pushing to Docker Hub
+│   └── build-and-push.yml  # Automated CI pipeline for building, testing, scanning, and pushing to Docker Hub
 ├── build.sh                 # Script for downloading QCOW/QCOW2 images, converting via qemu-nbd, verifying, and pushing
 ├── releases.txt             # Registry of URLs with QCOW/QCOW2 versions
 └── README.md                # Project documentation
