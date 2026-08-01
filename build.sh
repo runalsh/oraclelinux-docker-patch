@@ -44,10 +44,11 @@ while read -r tag url || [ -n "$tag" ]; do
     TAR_FILE="temp_${tag}.tar.gz"
     MOUNT_DIR="/mnt/oraclelinux_root"
 
+    # Pre-cleanup in case previous run was interrupted
     sudo qemu-nbd -d /dev/nbd0 2>/dev/null || true
     sudo vgchange -an 2>/dev/null || true
     sudo umount -f "${MOUNT_DIR}" 2>/dev/null || true
-    sudo rm -rf "${MOUNT_DIR}"
+    sudo rm -rf "${MOUNT_DIR}" "${QCOW2_FILE}" "${TAR_FILE}"
     sudo mkdir -p "${MOUNT_DIR}"
 
     echo "1. Downloading QCOW2 image..."
@@ -102,9 +103,14 @@ while read -r tag url || [ -n "$tag" ]; do
 
     echo "9. Cleaning up temporary mounts and files..."
     sudo umount "${MOUNT_DIR}" 2>/dev/null || true
-    sudo vgchange -an vg_main 2>/dev/null || true
+    sudo vgchange -an 2>/dev/null || true
     sudo qemu-nbd -d /dev/nbd0 2>/dev/null || true
     sudo rm -rf "${QCOW2_FILE}" "${TAR_FILE}" "${MOUNT_DIR}"
+
+    if [ "${CLEANUP_DOCKER_IMAGES:-false}" = "true" ]; then
+        echo "Removing local Docker image ${FULL_IMAGE_TAG} to save disk space..."
+        docker rmi -f "${FULL_IMAGE_TAG}" 2>/dev/null || true
+    fi
 
     echo "Successfully completed processing for tag ${tag}!"
     echo

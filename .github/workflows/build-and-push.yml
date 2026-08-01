@@ -32,4 +32,5 @@ jobs:
         env:
           TEST_VERSION: 'true'
           PUSH_TO_DOCKERHUB: 'true'
+          CLEANUP_DOCKER_IMAGES: 'true'
         run: ./build.sh
