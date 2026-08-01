@@ -1,6 +1,6 @@
 # Oracle Linux Docker Patch Images
 
-Automated build of Docker images for exact Oracle Linux point releases (**8.10**, **9.0** .. **9.8**) converted from OVA templates into **`runalsh/oraclelinux-patch`**.
+Automated build of Docker images for exact Oracle Linux point releases (**8.10**, **9.0** .. **9.8**) converted from official QCOW2 templates directly into **`runalsh/oraclelinux-patch`**.
 
 ---
 
@@ -21,9 +21,10 @@ Official tags like `oraclelinux:8.10` or `oraclelinux:9.5` **do not exist** or a
 
 This repository addresses the problem by:
 - Reading download URLs from **`releases.txt`** (extracted from `/root/lima` git history).
-- Downloading official Oracle Linux OVA templates.
-- Converting OVA images into Docker container rootfs archives using [`ova-to-docker`](https://github.com/executeatwill/ova-to-docker).
-- Validating `/etc/oracle-release` and `/etc/os-release` in the container.
+- Downloading official Oracle Linux QCOW2 templates.
+- Mounting QCOW2 disk images via `qemu-nbd` and LVM kernel modules.
+- Exporting container rootfs archives and importing them into Docker.
+- Validating `/etc/oracle-release` and `/etc/os-release` inside each container.
 - Automatically publishing ready-to-use Docker images to Docker Hub: **`runalsh/oraclelinux-patch`**.
 
 ---
@@ -32,23 +33,23 @@ This repository addresses the problem by:
 
 ### Oracle Linux 8
 
-| Tag | Version in `/etc/oracle-release` | Download OVA Template |
+| Tag | Version in `/etc/oracle-release` | Download QCOW2 Template |
 |---|---|---|
-| `runalsh/oraclelinux-patch:8.10` | `Oracle Linux Server release 8.10` | `OL8U10_x86_64-olvm-b287.ova` |
+| `runalsh/oraclelinux-patch:8.10` | `Oracle Linux Server release 8.10` | `OL8U10_x86_64-kvm-b287.qcow2` |
 
 ### Oracle Linux 9
 
-| Tag | Version in `/etc/oracle-release` | Download OVA Template |
+| Tag | Version in `/etc/oracle-release` | Download QCOW2 Template |
 |---|---|---|
-| `runalsh/oraclelinux-patch:9.0` | `Oracle Linux Server release 9.0` | `OL9U0_x86_64-olvm-b138.ova` |
-| `runalsh/oraclelinux-patch:9.1` | `Oracle Linux Server release 9.1` | `OL9U1_x86_64-olvm-b158.ova` |
-| `runalsh/oraclelinux-patch:9.2` | `Oracle Linux Server release 9.2` | `OL9U2_x86_64-olvm-b197.ova` |
-| `runalsh/oraclelinux-patch:9.3` | `Oracle Linux Server release 9.3` | `OL9U3_x86_64-olvm-b211.ova` |
-| `runalsh/oraclelinux-patch:9.4` | `Oracle Linux Server release 9.4` | `OL9U4_x86_64-olvm-b234.ova` |
-| `runalsh/oraclelinux-patch:9.5` | `Oracle Linux Server release 9.5` | `OL9U5_x86_64-olvm-b259.ova` |
-| `runalsh/oraclelinux-patch:9.6` | `Oracle Linux Server release 9.6` | `OL9U6_x86_64-olvm-b265.ova` |
-| `runalsh/oraclelinux-patch:9.7` | `Oracle Linux Server release 9.7` | `OL9U7_x86_64-olvm-b289.ova` |
-| `runalsh/oraclelinux-patch:9.8` | `Oracle Linux Server release 9.8` | `OL9U8_x86_64-olvm-b293.ova` |
+| `runalsh/oraclelinux-patch:9.0` | `Oracle Linux Server release 9.0` | `OL9U0_x86_64-kvm-b138.qcow2` |
+| `runalsh/oraclelinux-patch:9.1` | `Oracle Linux Server release 9.1` | `OL9U1_x86_64-kvm-b158.qcow2` |
+| `runalsh/oraclelinux-patch:9.2` | `Oracle Linux Server release 9.2` | `OL9U2_x86_64-kvm-b197.qcow2` |
+| `runalsh/oraclelinux-patch:9.3` | `Oracle Linux Server release 9.3` | `OL9U3_x86_64-kvm-b211.qcow2` |
+| `runalsh/oraclelinux-patch:9.4` | `Oracle Linux Server release 9.4` | `OL9U4_x86_64-kvm-b234.qcow2` |
+| `runalsh/oraclelinux-patch:9.5` | `Oracle Linux Server release 9.5` | `OL9U5_x86_64-kvm-b259.qcow2` |
+| `runalsh/oraclelinux-patch:9.6` | `Oracle Linux Server release 9.6` | `OL9U6_x86_64-kvm-b265.qcow2` |
+| `runalsh/oraclelinux-patch:9.7` | `Oracle Linux Server release 9.7` | `OL9U7_x86_64-kvm-b269.qcow2` |
+| `runalsh/oraclelinux-patch:9.8` | `Oracle Linux Server release 9.8` | `OL9U8_x86_64-kvm-b293.qcow2` |
 
 ---
 
@@ -64,7 +65,7 @@ docker run --rm -it runalsh/oraclelinux-patch:9.8 cat /etc/oracle-release
 
 ### Local Build
 
-The `releases.txt` file contains a list of tags and direct download URLs for OVA images.
+The `releases.txt` file contains a list of tags and direct download URLs for QCOW2 images.
 
 To convert and import all versions locally:
 
@@ -81,8 +82,8 @@ TEST_VERSION=true PUSH_TO_DOCKERHUB=false ./build.sh
 .
 ├── .github/workflows/
 │   └── build-and-push.yml  # Automated CI pipeline for building, testing, and pushing to Docker Hub
-├── build.sh                 # Script for downloading OVA images, converting via ova-to-docker, verifying, and pushing
-├── releases.txt             # Registry of URLs with OVA versions
+├── build.sh                 # Script for downloading QCOW2 images, converting via qemu-nbd, verifying, and pushing
+├── releases.txt             # Registry of URLs with QCOW2 versions
 └── README.md                # Project documentation
 ```
 

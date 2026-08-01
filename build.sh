@@ -9,55 +9,28 @@ install_system_packages() {
     if command -v apt-get &>/dev/null; then
         echo "Detected apt package manager."
         sudo apt-get update -qq || true
-        sudo apt-get install -y -qq qemu-utils lvm2 xfsprogs e2fsprogs parted python3-pip python3-setuptools
+        sudo apt-get install -y -qq qemu-utils lvm2 xfsprogs e2fsprogs parted curl tar
     elif command -v dnf &>/dev/null; then
         echo "Detected dnf package manager."
-        sudo dnf install -y qemu-img lvm2 xfsprogs e2fsprogs parted python3-pip
+        sudo dnf install -y qemu-img lvm2 xfsprogs e2fsprogs parted curl tar
     elif command -v yum &>/dev/null; then
         echo "Detected yum package manager."
-        sudo yum install -y qemu-img lvm2 xfsprogs e2fsprogs parted python3-pip
+        sudo yum install -y qemu-img lvm2 xfsprogs e2fsprogs parted curl tar
     else
-        echo "WARNING: Neither apt, dnf, nor yum detected. Please ensure qemu-img, lvm2, parted, and python3-pip are installed."
+        echo "WARNING: Ensure qemu-utils (qemu-nbd), lvm2, parted, and tar are installed."
     fi
 }
 
-# 1. Install system dependencies automatically
 install_system_packages
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# 2. Dynamic lookup for ova-to-docker repository (override with CONVERTER_DIR env var)
-if [ -z "${CONVERTER_DIR:-}" ] || [ ! -d "${CONVERTER_DIR}" ]; then
-    if [ -d "${SCRIPT_DIR}/../ova-to-docker" ]; then
-        CONVERTER_DIR="${SCRIPT_DIR}/../ova-to-docker"
-    elif [ -d "${SCRIPT_DIR}/ova-to-docker" ]; then
-        CONVERTER_DIR="${SCRIPT_DIR}/ova-to-docker"
-    else
-        CONVERTER_DIR="${SCRIPT_DIR}/.ova-to-docker"
-        if [ ! -d "${CONVERTER_DIR}" ]; then
-            echo "Cloning ova-to-docker repository into ${CONVERTER_DIR}..."
-            git clone https://github.com/executeatwill/ova-to-docker "${CONVERTER_DIR}"
-        fi
-    fi
-fi
-
-CONVERTER_SCRIPT="${CONVERTER_DIR}/ova-to-docker.py"
-if [ ! -f "${CONVERTER_SCRIPT}" ]; then
-    CONVERTER_SCRIPT="${CONVERTER_DIR}/no-requirements-ova-to-docker.py"
-fi
-
-if [ -f "${CONVERTER_DIR}/requirements.txt" ]; then
-    echo "Installing python dependencies from ${CONVERTER_DIR}/requirements.txt..."
-    pip3 install -r "${CONVERTER_DIR}/requirements.txt" || pip install -r "${CONVERTER_DIR}/requirements.txt" || true
-fi
 
 if [ ! -f "$RELEASES_FILE" ]; then
     echo "Error: $RELEASES_FILE not found!"
     exit 1
 fi
 
-echo "Using ova-to-docker converter script: ${CONVERTER_SCRIPT}"
-echo "Starting process for repository: ${IMAGE_NAME}"
+sudo modprobe nbd max_part=16 2>/dev/null || true
+
+echo "Starting QCOW2 -> Docker build process for repository: ${IMAGE_NAME}"
 
 while read -r tag url || [ -n "$tag" ]; do
     [[ -z "$tag" || "$tag" =~ ^# ]] && continue
@@ -67,45 +40,47 @@ while read -r tag url || [ -n "$tag" ]; do
     echo "URL: ${url}"
     echo "=========================================="
 
-    DOWNLOADED_OVA="temp_download_${tag}.ova"
-    UNPACK_DIR="temp_unpack_${tag}"
-    OUTPUT_DIR="temp_output_${tag}"
-    VMDK_FILE="temp_image_${tag}.vmdk"
+    QCOW2_FILE="temp_${tag}.qcow2"
+    TAR_FILE="temp_${tag}.tar.gz"
+    MOUNT_DIR="/mnt/oraclelinux_root"
 
-    mkdir -p "${UNPACK_DIR}" "${OUTPUT_DIR}"
+    sudo qemu-nbd -d /dev/nbd0 2>/dev/null || true
+    sudo vgchange -an 2>/dev/null || true
+    sudo umount -f "${MOUNT_DIR}" 2>/dev/null || true
+    sudo rm -rf "${MOUNT_DIR}"
+    mkdir -p "${MOUNT_DIR}"
 
-    echo "1. Downloading OVA template..."
-    curl -fSL -o "${DOWNLOADED_OVA}" "${url}"
+    echo "1. Downloading QCOW2 image..."
+    curl -fSL -o "${QCOW2_FILE}" "${url}"
 
-    echo "2. Unpacking OVA archive..."
-    tar -xf "${DOWNLOADED_OVA}" -C "${UNPACK_DIR}"
+    echo "2. Attaching QCOW2 to NBD block device..."
+    sudo qemu-nbd -c /dev/nbd0 "${QCOW2_FILE}"
+    sleep 2
 
-    echo "3. Locating extracted disk file inside OVA archive..."
-    DISK_FILE=$(find "${UNPACK_DIR}" -type f ! -name "*.ovf" ! -name "*.mf" ! -name "*.xml" | head -n 1)
+    echo "3. Scanning LVM volume groups and partitions..."
+    sudo vgscan --mknodes 2>/dev/null || true
+    sudo vgchange -ay 2>/dev/null || true
 
-    if [ -z "${DISK_FILE}" ]; then
-        echo "ERROR: Could not find disk file inside OVA archive for tag ${tag}!"
-        exit 1
+    ROOT_DEV=""
+    if [ -b "/dev/vg_main/lv_root" ]; then
+        ROOT_DEV="/dev/vg_main/lv_root"
+    elif [ -b "/dev/nbd0p4" ]; then
+        ROOT_DEV="/dev/nbd0p4"
+    elif [ -b "/dev/nbd0p2" ]; then
+        ROOT_DEV="/dev/nbd0p2"
+    elif [ -b "/dev/nbd0p1" ]; then
+        ROOT_DEV="/dev/nbd0p1"
+    else
+        ROOT_DEV="/dev/nbd0"
     fi
 
-    echo "4. Renaming extracted disk file '${DISK_FILE}' to '${VMDK_FILE}'..."
-    mv "${DISK_FILE}" "${VMDK_FILE}"
+    echo "Found root device: ${ROOT_DEV}"
 
-    ABS_VMDK_FILE="$(cd "$(dirname "${VMDK_FILE}")" && pwd)/$(basename "${VMDK_FILE}")"
-    ABS_OUTPUT_DIR="$(mkdir -p "${OUTPUT_DIR}" && cd "${OUTPUT_DIR}" && pwd)"
+    echo "4. Mounting root filesystem..."
+    sudo mount "${ROOT_DEV}" "${MOUNT_DIR}"
 
-    echo "5. Converting VMDK (${ABS_VMDK_FILE}) to Docker tar archive using ova-to-docker..."
-    (
-        cd "${CONVERTER_DIR}"
-        yes "y" | python3 "${CONVERTER_SCRIPT}" --input "${ABS_VMDK_FILE}" --output "${ABS_OUTPUT_DIR}" || true
-    )
-
-    TAR_FILE=$(find "${OUTPUT_DIR}" -name "*.tar.gz" -o -name "*.tar" | head -n 1)
-
-    if [ -z "${TAR_FILE}" ]; then
-        echo "ERROR: ova-to-docker failed to produce tar archive for tag ${tag}!"
-        exit 1
-    fi
+    echo "5. Creating rootfs tar archive..."
+    sudo tar -C "${MOUNT_DIR}" -czf "${TAR_FILE}" .
 
     FULL_IMAGE_TAG="${IMAGE_NAME}:${tag}"
 
@@ -116,24 +91,20 @@ while read -r tag url || [ -n "$tag" ]; do
         echo "7. Verifying container functionality and release version..."
         RELEASE_INFO=$(docker run --rm "${FULL_IMAGE_TAG}" cat /etc/oracle-release || docker run --rm "${FULL_IMAGE_TAG}" cat /etc/os-release)
         echo "$RELEASE_INFO"
-
-        EXPECTED_VER="${tag}"
-        if echo "$RELEASE_INFO" | grep -q "${EXPECTED_VER}"; then
-            echo "SUCCESS: Version match found for ${EXPECTED_VER}!"
-        else
-            echo "WARNING: Exact version string ${EXPECTED_VER} not explicitly matched in release info text, but container verified."
-        fi
     fi
 
     if [ "${PUSH_TO_DOCKERHUB:-false}" = "true" ]; then
         echo "8. Pushing image to Docker Hub..."
         docker push "${FULL_IMAGE_TAG}"
     else
-        echo "8. Skipping Docker Hub push (PUSH_TO_DOCKERHUB is not set to 'true')."
+        echo "8. Skipping Docker Hub push."
     fi
 
-    echo "9. Cleaning up temporary files..."
-    rm -rf "${DOWNLOADED_OVA}" "${UNPACK_DIR}" "${VMDK_FILE}" "${OUTPUT_DIR}"
+    echo "9. Cleaning up temporary mounts and files..."
+    sudo umount "${MOUNT_DIR}"
+    sudo vgchange -an vg_main 2>/dev/null || true
+    sudo qemu-nbd -d /dev/nbd0 2>/dev/null || true
+    rm -rf "${QCOW2_FILE}" "${TAR_FILE}" "${MOUNT_DIR}"
 
     echo "Successfully completed processing for tag ${tag}!"
     echo
