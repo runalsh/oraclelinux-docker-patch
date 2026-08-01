@@ -24,13 +24,20 @@ install_system_packages() {
 # 1. Install system dependencies automatically
 install_system_packages
 
-# 2. Locate or clone executeatwill/ova-to-docker repository
-CONVERTER_DIR="/root/ova-to-docker"
-if [ ! -d "${CONVERTER_DIR}" ]; then
-    CONVERTER_DIR="/tmp/ova-to-docker"
-    if [ ! -d "${CONVERTER_DIR}" ]; then
-        echo "Cloning ova-to-docker repository..."
-        git clone https://github.com/executeatwill/ova-to-docker "${CONVERTER_DIR}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# 2. Dynamic lookup for ova-to-docker repository (override with CONVERTER_DIR env var)
+if [ -z "${CONVERTER_DIR:-}" ] || [ ! -d "${CONVERTER_DIR}" ]; then
+    if [ -d "${SCRIPT_DIR}/../ova-to-docker" ]; then
+        CONVERTER_DIR="${SCRIPT_DIR}/../ova-to-docker"
+    elif [ -d "${SCRIPT_DIR}/ova-to-docker" ]; then
+        CONVERTER_DIR="${SCRIPT_DIR}/ova-to-docker"
+    else
+        CONVERTER_DIR="${SCRIPT_DIR}/.ova-to-docker"
+        if [ ! -d "${CONVERTER_DIR}" ]; then
+            echo "Cloning ova-to-docker repository into ${CONVERTER_DIR}..."
+            git clone https://github.com/executeatwill/ova-to-docker "${CONVERTER_DIR}"
+        fi
     fi
 fi
 
