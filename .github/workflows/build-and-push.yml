@@ -10,6 +10,12 @@ on:
       - '**.md'
       - 'docs/**'
   workflow_dispatch:
+    inputs:
+      skip_exists_check:
+        description: 'Skip Docker Hub existence check and force rebuild/overwrite all images'
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   build-and-push:
@@ -42,7 +48,7 @@ jobs:
           TEST_VERSION: 'true'
           PUSH_TO_DOCKERHUB: 'true'
           CLEANUP_DOCKER_IMAGES: 'true'
-          SKIP_EXISTS_CHECK: 'false'
+          SKIP_EXISTS_CHECK: ${{ inputs.skip_exists_check || 'false' }}
           ENABLE_TRIVY_SCAN: 'true'
         run: ./build.sh
 
