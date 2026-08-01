@@ -58,21 +58,48 @@ while read -r tag url || [ -n "$tag" ]; do
     sudo qemu-nbd -c /dev/nbd0 "${QCOW2_FILE}"
     sleep 2
 
-    echo "3. Scanning LVM volume groups and partitions..."
+    echo "3. Dynamically discovering root partition/volume..."
     sudo vgscan --mknodes 2>/dev/null || true
     sudo vgchange -ay 2>/dev/null || true
 
     ROOT_DEV=""
-    if [ -b "/dev/vg_main/lv_root" ]; then
-        ROOT_DEV="/dev/vg_main/lv_root"
-    elif [ -b "/dev/nbd0p4" ]; then
-        ROOT_DEV="/dev/nbd0p4"
-    elif [ -b "/dev/nbd0p2" ]; then
-        ROOT_DEV="/dev/nbd0p2"
-    elif [ -b "/dev/nbd0p1" ]; then
-        ROOT_DEV="/dev/nbd0p1"
-    else
-        ROOT_DEV="/dev/nbd0"
+    TEST_MOUNT_POINT="/tmp/check_root_fs"
+    sudo rm -rf "${TEST_MOUNT_POINT}"
+    sudo mkdir -p "${TEST_MOUNT_POINT}"
+
+    # Check all LVM logical volumes dynamically
+    for lv in $(sudo lvs --noheadings -o lv_path 2>/dev/null || true); do
+        if sudo mount -o ro "${lv}" "${TEST_MOUNT_POINT}" 2>/dev/null; then
+            if [ -f "${TEST_MOUNT_POINT}/etc/oracle-release" ] || [ -f "${TEST_MOUNT_POINT}/etc/os-release" ]; then
+                ROOT_DEV="${lv}"
+                sudo umount "${TEST_MOUNT_POINT}"
+                break
+            fi
+            sudo umount "${TEST_MOUNT_POINT}"
+        fi
+    done
+
+    # If no LVM root found, check raw partitions /dev/nbd0p* and /dev/nbd0
+    if [ -z "${ROOT_DEV}" ]; then
+        for part in /dev/nbd0p* /dev/nbd0; do
+            [ -b "${part}" ] || continue
+            if sudo mount -o ro "${part}" "${TEST_MOUNT_POINT}" 2>/dev/null; then
+                if [ -f "${TEST_MOUNT_POINT}/etc/oracle-release" ] || [ -f "${TEST_MOUNT_POINT}/etc/os-release" ]; then
+                    ROOT_DEV="${part}"
+                    sudo umount "${TEST_MOUNT_POINT}"
+                    break
+                fi
+                sudo umount "${TEST_MOUNT_POINT}"
+            fi
+        done
+    fi
+
+    sudo rm -rf "${TEST_MOUNT_POINT}"
+
+    if [ -z "${ROOT_DEV}" ]; then
+        echo "ERROR: Could not locate root filesystem containing /etc/os-release!"
+        sudo qemu-nbd -d /dev/nbd0 2>/dev/null || true
+        exit 1
     fi
 
     echo "Found root device: ${ROOT_DEV}"
