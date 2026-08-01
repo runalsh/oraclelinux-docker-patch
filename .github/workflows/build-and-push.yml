@@ -25,10 +25,10 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Install QEMU and LVM dependencies
+      - name: Install QEMU, LVM dependencies and Python pip
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu-utils lvm2 xfsprogs e2fsprogs parted
+          sudo apt-get install -y qemu-utils lvm2 xfsprogs e2fsprogs parted python3-pip python3-setuptools
 
       - name: Make build script executable
         run: chmod +x build.sh

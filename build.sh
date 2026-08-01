@@ -19,6 +19,11 @@ if [ ! -f "${CONVERTER_SCRIPT}" ]; then
     CONVERTER_SCRIPT="${CONVERTER_DIR}/no-requirements-ova-to-docker.py"
 fi
 
+if [ -f "${CONVERTER_DIR}/requirements.txt" ]; then
+    echo "Installing python dependencies from ${CONVERTER_DIR}/requirements.txt..."
+    pip install -r "${CONVERTER_DIR}/requirements.txt" || pip3 install -r "${CONVERTER_DIR}/requirements.txt" || true
+fi
+
 if [ ! -f "$RELEASES_FILE" ]; then
     echo "Error: $RELEASES_FILE not found!"
     exit 1
