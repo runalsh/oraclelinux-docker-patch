@@ -67,18 +67,31 @@ while read -r tag url || [ -n "$tag" ]; do
     echo "URL: ${url}"
     echo "=========================================="
 
-    VMDK_FILE="temp_image_${tag}.vmdk"
+    DOWNLOADED_FILE="temp_download_${tag}.file"
     OUTPUT_DIR="temp_output_${tag}"
 
     mkdir -p "${OUTPUT_DIR}"
 
-    echo "1. Downloading VMDK image..."
-    curl -fSL -o "${VMDK_FILE}" "${url}"
+    echo "1. Downloading image file..."
+    curl -fSL -o "${DOWNLOADED_FILE}" "${url}"
+
+    VMDK_FILE="${DOWNLOADED_FILE}"
+
+    # If the downloaded file is an OVA archive, untar to extract the VMDK disk image inside
+    if [[ "${url}" == *.ova ]] || file "${DOWNLOADED_FILE}" | grep -q "tar archive"; then
+        echo "Extracting VMDK disk image from OVA tar archive..."
+        tar -xf "${DOWNLOADED_FILE}" --wildcards "*.vmdk" 2>/dev/null || tar -xf "${DOWNLOADED_FILE}"
+        EXTRACTED_VMDK=$(find . -maxdepth 2 -name "*.vmdk" ! -name "${DOWNLOADED_FILE}" | head -n 1)
+        if [ -n "${EXTRACTED_VMDK}" ]; then
+            VMDK_FILE="${EXTRACTED_VMDK}"
+            echo "Extracted VMDK file: ${VMDK_FILE}"
+        fi
+    fi
 
     ABS_VMDK_FILE="$(cd "$(dirname "${VMDK_FILE}")" && pwd)/$(basename "${VMDK_FILE}")"
     ABS_OUTPUT_DIR="$(mkdir -p "${OUTPUT_DIR}" && cd "${OUTPUT_DIR}" && pwd)"
 
-    echo "2. Converting VMDK to Docker tar archive using ova-to-docker..."
+    echo "2. Converting VMDK (${ABS_VMDK_FILE}) to Docker tar archive using ova-to-docker..."
     (
         cd "${CONVERTER_DIR}"
         yes "y" | python3 "${CONVERTER_SCRIPT}" --input "${ABS_VMDK_FILE}" --output "${ABS_OUTPUT_DIR}" || true
@@ -117,7 +130,7 @@ while read -r tag url || [ -n "$tag" ]; do
     fi
 
     echo "6. Cleaning up temporary files..."
-    rm -rf "${VMDK_FILE}" "${OUTPUT_DIR}"
+    rm -rf "${DOWNLOADED_FILE}" "${OUTPUT_DIR}" *.vmdk
 
     echo "Successfully completed processing for tag ${tag}!"
     echo

@@ -1,1 +1,10 @@
 8.10 https://yum.oracle.com/templates/OracleLinux/OL8/u10/x86_64/OL8U10_x86_64-aws-b288.vmdk
+9.0 https://yum.oracle.com/templates/OracleLinux/OL9/u0/x86_64/OL9U0_x86_64-olvm-b138.ova
+9.1 https://yum.oracle.com/templates/OracleLinux/OL9/u1/x86_64/OL9U1_x86_64-olvm-b158.ova
+9.2 https://yum.oracle.com/templates/OracleLinux/OL9/u2/x86_64/OL9U2_x86_64-olvm-b197.ova
+9.3 https://yum.oracle.com/templates/OracleLinux/OL9/u3/x86_64/OL9U3_x86_64-olvm-b211.ova
+9.4 https://yum.oracle.com/templates/OracleLinux/OL9/u4/x86_64/OL9U4_x86_64-olvm-b234.ova
+9.5 https://yum.oracle.com/templates/OracleLinux/OL9/u5/x86_64/OL9U5_x86_64-olvm-b259.ova
+9.6 https://yum.oracle.com/templates/OracleLinux/OL9/u6/x86_64/OL9U6_x86_64-olvm-b265.ova
+9.7 https://yum.oracle.com/templates/OracleLinux/OL9/u7/x86_64/OL9U7_x86_64-olvm-b289.ova
+9.8 https://yum.oracle.com/templates/OracleLinux/OL9/u8/x86_64/OL9U8_x86_64-olvm-b293.ova
