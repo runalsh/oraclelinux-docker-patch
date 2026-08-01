@@ -23,8 +23,8 @@ This repository addresses the problem by:
 - Reading download URLs from **`releases.txt`** (extracted from `/root/lima` git history).
 - Downloading official Oracle Linux QCOW2 templates.
 - Mounting QCOW2 disk images via `qemu-nbd` and LVM kernel modules.
+- Dynamically detecting root file systems by verifying `/etc/oracle-release` or `/etc/os-release`.
 - Exporting container rootfs archives and importing them into Docker.
-- Validating `/etc/oracle-release` and `/etc/os-release` inside each container.
 - Automatically publishing ready-to-use Docker images to Docker Hub: **`runalsh/oraclelinux-patch`**.
 
 ---
@@ -73,6 +73,19 @@ To convert and import all versions locally:
 chmod +x build.sh
 TEST_VERSION=true PUSH_TO_DOCKERHUB=false ./build.sh
 ```
+
+---
+
+## 🔧 Environment Variables
+
+The `build.sh` script supports the following configuration environment variables:
+
+| Variable | Default | Description |
+|---|---|---|
+| `TEST_VERSION` | `true` | When set to `true`, verifies container functionality and validates `/etc/oracle-release` after import. |
+| `PUSH_TO_DOCKERHUB` | `false` | When set to `true`, automatically pushes built images to Docker Hub (`runalsh/oraclelinux-patch:<tag>`). |
+| `CLEANUP_DOCKER_IMAGES` | `false` | When set to `true`, deletes the local Docker image (`docker rmi`) after build and push to conserve disk space. |
+| `SKIP_EXISTS_CHECK` | `false` | When set to `false`, checks if the image tag already exists on Docker Hub and skips download/conversion if present. Set to `true` to force building all tags regardless of Docker Hub status. |
 
 ---
 
