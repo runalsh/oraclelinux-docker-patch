@@ -3,10 +3,20 @@ set -euo pipefail
 
 IMAGE_NAME="runalsh/oraclelinux-patch"
 RELEASES_FILE="releases.txt"
-CONVERTER_SCRIPT="/root/ova-to-docker/no-requirements-ova-to-docker.py"
 
-if [ ! -f "$CONVERTER_SCRIPT" ]; then
-    CONVERTER_SCRIPT="/root/ova-to-docker/ova-to-docker.py"
+# Locate or clone executeatwill/ova-to-docker repository
+CONVERTER_DIR="/root/ova-to-docker"
+if [ ! -d "${CONVERTER_DIR}" ]; then
+    CONVERTER_DIR="/tmp/ova-to-docker"
+    if [ ! -d "${CONVERTER_DIR}" ]; then
+        echo "Cloning ova-to-docker repository..."
+        git clone https://github.com/executeatwill/ova-to-docker "${CONVERTER_DIR}"
+    fi
+fi
+
+CONVERTER_SCRIPT="${CONVERTER_DIR}/ova-to-docker.py"
+if [ ! -f "${CONVERTER_SCRIPT}" ]; then
+    CONVERTER_SCRIPT="${CONVERTER_DIR}/no-requirements-ova-to-docker.py"
 fi
 
 if [ ! -f "$RELEASES_FILE" ]; then
@@ -14,6 +24,7 @@ if [ ! -f "$RELEASES_FILE" ]; then
     exit 1
 fi
 
+echo "Using ova-to-docker converter script: ${CONVERTER_SCRIPT}"
 echo "Starting process for repository: ${IMAGE_NAME}"
 
 while read -r tag url || [ -n "$tag" ]; do
@@ -32,13 +43,13 @@ while read -r tag url || [ -n "$tag" ]; do
     echo "1. Downloading VMDK image..."
     curl -fSL -o "${VMDK_FILE}" "${url}"
 
-    echo "2. Converting VMDK to Docker tar archive via ova-to-docker..."
+    echo "2. Converting VMDK to Docker tar archive using ova-to-docker..."
     echo "y" | python3 "${CONVERTER_SCRIPT}" --input "${VMDK_FILE}" --output "${OUTPUT_DIR}" || true
 
     TAR_FILE=$(find "${OUTPUT_DIR}" -name "*.tar.gz" -o -name "*.tar" | head -n 1)
 
     if [ -z "${TAR_FILE}" ]; then
-        echo "ERROR: Failed to produce tar archive for tag ${tag}!"
+        echo "ERROR: ova-to-docker failed to produce tar archive for tag ${tag}!"
         exit 1
     fi
 
