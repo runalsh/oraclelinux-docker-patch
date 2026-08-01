@@ -4,7 +4,27 @@ set -euo pipefail
 IMAGE_NAME="runalsh/oraclelinux-patch"
 RELEASES_FILE="releases.txt"
 
-# Locate or clone executeatwill/ova-to-docker repository
+install_system_packages() {
+    echo "Checking and installing required system packages..."
+    if command -v apt-get &>/dev/null; then
+        echo "Detected apt package manager."
+        sudo apt-get update -qq || true
+        sudo apt-get install -y -qq qemu-utils lvm2 xfsprogs e2fsprogs parted python3-pip python3-setuptools
+    elif command -v dnf &>/dev/null; then
+        echo "Detected dnf package manager."
+        sudo dnf install -y qemu-img lvm2 xfsprogs e2fsprogs parted python3-pip
+    elif command -v yum &>/dev/null; then
+        echo "Detected yum package manager."
+        sudo yum install -y qemu-img lvm2 xfsprogs e2fsprogs parted python3-pip
+    else
+        echo "WARNING: Neither apt, dnf, nor yum detected. Please ensure qemu-img, lvm2, parted, and python3-pip are installed."
+    fi
+}
+
+# 1. Install system dependencies automatically
+install_system_packages
+
+# 2. Locate or clone executeatwill/ova-to-docker repository
 CONVERTER_DIR="/root/ova-to-docker"
 if [ ! -d "${CONVERTER_DIR}" ]; then
     CONVERTER_DIR="/tmp/ova-to-docker"
@@ -21,7 +41,7 @@ fi
 
 if [ -f "${CONVERTER_DIR}/requirements.txt" ]; then
     echo "Installing python dependencies from ${CONVERTER_DIR}/requirements.txt..."
-    pip install -r "${CONVERTER_DIR}/requirements.txt" || pip3 install -r "${CONVERTER_DIR}/requirements.txt" || true
+    pip3 install -r "${CONVERTER_DIR}/requirements.txt" || pip install -r "${CONVERTER_DIR}/requirements.txt" || true
 fi
 
 if [ ! -f "$RELEASES_FILE" ]; then
