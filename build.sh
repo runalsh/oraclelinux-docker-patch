@@ -48,7 +48,7 @@ while read -r tag url || [ -n "$tag" ]; do
     sudo vgchange -an 2>/dev/null || true
     sudo umount -f "${MOUNT_DIR}" 2>/dev/null || true
     sudo rm -rf "${MOUNT_DIR}"
-    mkdir -p "${MOUNT_DIR}"
+    sudo mkdir -p "${MOUNT_DIR}"
 
     echo "1. Downloading QCOW2 image..."
     curl -fSL -o "${QCOW2_FILE}" "${url}"
@@ -101,10 +101,10 @@ while read -r tag url || [ -n "$tag" ]; do
     fi
 
     echo "9. Cleaning up temporary mounts and files..."
-    sudo umount "${MOUNT_DIR}"
+    sudo umount "${MOUNT_DIR}" 2>/dev/null || true
     sudo vgchange -an vg_main 2>/dev/null || true
     sudo qemu-nbd -d /dev/nbd0 2>/dev/null || true
-    rm -rf "${QCOW2_FILE}" "${TAR_FILE}" "${MOUNT_DIR}"
+    sudo rm -rf "${QCOW2_FILE}" "${TAR_FILE}" "${MOUNT_DIR}"
 
     echo "Successfully completed processing for tag ${tag}!"
     echo
