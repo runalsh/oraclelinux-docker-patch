@@ -1,0 +1,1 @@
+8.10 https://yum.oracle.com/templates/OracleLinux/OL8/u10/x86_64/OL8U10_x86_64-aws-b288.vmdk
