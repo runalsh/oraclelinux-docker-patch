@@ -40,6 +40,18 @@ while read -r tag url || [ -n "$tag" ]; do
     echo "URL: ${url}"
     echo "=========================================="
 
+    FULL_IMAGE_TAG="${IMAGE_NAME}:${tag}"
+
+    if [ "${CHECK_DOCKERHUB_EXISTS:-true}" = "true" ]; then
+        echo "Checking if ${FULL_IMAGE_TAG} already exists on Docker Hub..."
+        if docker manifest inspect "${FULL_IMAGE_TAG}" &>/dev/null || curl -sfSL "https://hub.docker.com/v2/repositories/${IMAGE_NAME}/tags/${tag}/" &>/dev/null; then
+            echo "Tag ${FULL_IMAGE_TAG} already exists on Docker Hub. Skipping download and build!"
+            echo
+            continue
+        fi
+        echo "Tag ${FULL_IMAGE_TAG} not found on Docker Hub. Proceeding with build..."
+    fi
+
     QCOW2_FILE="temp_${tag}.qcow2"
     TAR_FILE="temp_${tag}.tar.gz"
     MOUNT_DIR="/mnt/oraclelinux_root"
@@ -109,8 +121,6 @@ while read -r tag url || [ -n "$tag" ]; do
 
     echo "5. Creating rootfs tar archive..."
     sudo tar -C "${MOUNT_DIR}" -czf "${TAR_FILE}" .
-
-    FULL_IMAGE_TAG="${IMAGE_NAME}:${tag}"
 
     echo "6. Importing rootfs into Docker as ${FULL_IMAGE_TAG}..."
     docker import "${TAR_FILE}" "${FULL_IMAGE_TAG}"
