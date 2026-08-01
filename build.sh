@@ -67,31 +67,28 @@ while read -r tag url || [ -n "$tag" ]; do
     echo "URL: ${url}"
     echo "=========================================="
 
-    DOWNLOADED_FILE="temp_download_${tag}.file"
+    EXT="${url##*.}"
+    DOWNLOADED_FILE="temp_download_${tag}.${EXT}"
     OUTPUT_DIR="temp_output_${tag}"
 
     mkdir -p "${OUTPUT_DIR}"
 
-    echo "1. Downloading image file..."
+    echo "1. Downloading image template..."
     curl -fSL -o "${DOWNLOADED_FILE}" "${url}"
 
-    VMDK_FILE="${DOWNLOADED_FILE}"
-
-    # If the downloaded file is an OVA archive, untar to extract the VMDK disk image inside
-    if [[ "${url}" == *.ova ]] || file "${DOWNLOADED_FILE}" | grep -q "tar archive"; then
-        echo "Extracting VMDK disk image from OVA tar archive..."
-        tar -xf "${DOWNLOADED_FILE}" --wildcards "*.vmdk" 2>/dev/null || tar -xf "${DOWNLOADED_FILE}"
-        EXTRACTED_VMDK=$(find . -maxdepth 2 -name "*.vmdk" ! -name "${DOWNLOADED_FILE}" | head -n 1)
-        if [ -n "${EXTRACTED_VMDK}" ]; then
-            VMDK_FILE="${EXTRACTED_VMDK}"
-            echo "Extracted VMDK file: ${VMDK_FILE}"
-        fi
+    # If the image format is not .vmdk or .ova, pre-convert to .vmdk for ova-to-docker compatibility
+    VMDK_FILE="temp_image_${tag}.vmdk"
+    if [[ "${EXT}" != "vmdk" && "${EXT}" != "ova" ]]; then
+        echo "2. Pre-converting ${DOWNLOADED_FILE} (${EXT}) to VMDK format via qemu-img..."
+        qemu-img convert -O vmdk "${DOWNLOADED_FILE}" "${VMDK_FILE}"
+    else
+        VMDK_FILE="${DOWNLOADED_FILE}"
     fi
 
     ABS_VMDK_FILE="$(cd "$(dirname "${VMDK_FILE}")" && pwd)/$(basename "${VMDK_FILE}")"
     ABS_OUTPUT_DIR="$(mkdir -p "${OUTPUT_DIR}" && cd "${OUTPUT_DIR}" && pwd)"
 
-    echo "2. Converting VMDK (${ABS_VMDK_FILE}) to Docker tar archive using ova-to-docker..."
+    echo "3. Converting VMDK (${ABS_VMDK_FILE}) to Docker tar archive using ova-to-docker..."
     (
         cd "${CONVERTER_DIR}"
         yes "y" | python3 "${CONVERTER_SCRIPT}" --input "${ABS_VMDK_FILE}" --output "${ABS_OUTPUT_DIR}" || true
@@ -106,11 +103,11 @@ while read -r tag url || [ -n "$tag" ]; do
 
     FULL_IMAGE_TAG="${IMAGE_NAME}:${tag}"
 
-    echo "3. Importing rootfs into Docker as ${FULL_IMAGE_TAG}..."
+    echo "4. Importing rootfs into Docker as ${FULL_IMAGE_TAG}..."
     docker import "${TAR_FILE}" "${FULL_IMAGE_TAG}"
 
     if [ "${TEST_VERSION:-true}" = "true" ]; then
-        echo "4. Verifying container functionality and release version..."
+        echo "5. Verifying container functionality and release version..."
         RELEASE_INFO=$(docker run --rm "${FULL_IMAGE_TAG}" cat /etc/oracle-release || docker run --rm "${FULL_IMAGE_TAG}" cat /etc/os-release)
         echo "$RELEASE_INFO"
 
@@ -123,14 +120,14 @@ while read -r tag url || [ -n "$tag" ]; do
     fi
 
     if [ "${PUSH_TO_DOCKERHUB:-false}" = "true" ]; then
-        echo "5. Pushing image to Docker Hub..."
+        echo "6. Pushing image to Docker Hub..."
         docker push "${FULL_IMAGE_TAG}"
     else
-        echo "5. Skipping Docker Hub push (PUSH_TO_DOCKERHUB is not set to 'true')."
+        echo "6. Skipping Docker Hub push (PUSH_TO_DOCKERHUB is not set to 'true')."
     fi
 
-    echo "6. Cleaning up temporary files..."
-    rm -rf "${DOWNLOADED_FILE}" "${OUTPUT_DIR}" *.vmdk
+    echo "7. Cleaning up temporary files..."
+    rm -rf "${DOWNLOADED_FILE}" "${VMDK_FILE}" "${OUTPUT_DIR}"
 
     echo "Successfully completed processing for tag ${tag}!"
     echo
