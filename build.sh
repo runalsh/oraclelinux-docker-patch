@@ -54,7 +54,8 @@ while read -r tag url || [ -n "$tag" ]; do
         echo "SKIP_EXISTS_CHECK is 'true'. Skipping Docker Hub check and forcing build for ${FULL_IMAGE_TAG}..."
     fi
 
-    QCOW2_FILE="temp_${tag}.qcow2"
+    EXT="${url##*.}"
+    QCOW_FILE="temp_${tag}.${EXT}"
     TAR_FILE="temp_${tag}.tar.gz"
     MOUNT_DIR="/mnt/oraclelinux_root"
 
@@ -62,14 +63,14 @@ while read -r tag url || [ -n "$tag" ]; do
     sudo qemu-nbd -d /dev/nbd0 2>/dev/null || true
     sudo vgchange -an 2>/dev/null || true
     sudo umount -f "${MOUNT_DIR}" 2>/dev/null || true
-    sudo rm -rf "${MOUNT_DIR}" "${QCOW2_FILE}" "${TAR_FILE}"
+    sudo rm -rf "${MOUNT_DIR}" "${QCOW_FILE}" "${TAR_FILE}"
     sudo mkdir -p "${MOUNT_DIR}"
 
-    echo "1. Downloading QCOW2 image..."
-    curl -fSL -o "${QCOW2_FILE}" "${url}"
+    echo "1. Downloading QCOW image (${EXT})..."
+    curl -fSL -o "${QCOW_FILE}" "${url}"
 
-    echo "2. Attaching QCOW2 to NBD block device..."
-    sudo qemu-nbd -c /dev/nbd0 "${QCOW2_FILE}"
+    echo "2. Attaching QCOW image to NBD block device..."
+    sudo qemu-nbd -c /dev/nbd0 "${QCOW_FILE}"
     sleep 2
 
     echo "3. Dynamically discovering root partition/volume..."
@@ -144,7 +145,7 @@ while read -r tag url || [ -n "$tag" ]; do
     sudo umount "${MOUNT_DIR}" 2>/dev/null || true
     sudo vgchange -an 2>/dev/null || true
     sudo qemu-nbd -d /dev/nbd0 2>/dev/null || true
-    sudo rm -rf "${QCOW2_FILE}" "${TAR_FILE}" "${MOUNT_DIR}"
+    sudo rm -rf "${QCOW_FILE}" "${TAR_FILE}" "${MOUNT_DIR}"
 
     if [ "${CLEANUP_DOCKER_IMAGES:-false}" = "true" ]; then
         echo "Removing local Docker image ${FULL_IMAGE_TAG} to save disk space..."
