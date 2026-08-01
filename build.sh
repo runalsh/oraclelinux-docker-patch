@@ -67,21 +67,37 @@ while read -r tag url || [ -n "$tag" ]; do
     echo "URL: ${url}"
     echo "=========================================="
 
-    IMAGE_FILE="temp_image_${tag}.ova"
+    DOWNLOADED_OVA="temp_download_${tag}.ova"
+    UNPACK_DIR="temp_unpack_${tag}"
     OUTPUT_DIR="temp_output_${tag}"
+    VMDK_FILE="temp_image_${tag}.vmdk"
 
-    mkdir -p "${OUTPUT_DIR}"
+    mkdir -p "${UNPACK_DIR}" "${OUTPUT_DIR}"
 
     echo "1. Downloading OVA template..."
-    curl -fSL -o "${IMAGE_FILE}" "${url}"
+    curl -fSL -o "${DOWNLOADED_OVA}" "${url}"
 
-    ABS_IMAGE_FILE="$(cd "$(dirname "${IMAGE_FILE}")" && pwd)/$(basename "${IMAGE_FILE}")"
+    echo "2. Unpacking OVA archive..."
+    tar -xf "${DOWNLOADED_OVA}" -C "${UNPACK_DIR}"
+
+    echo "3. Locating extracted disk file inside OVA archive..."
+    DISK_FILE=$(find "${UNPACK_DIR}" -type f ! -name "*.ovf" ! -name "*.mf" ! -name "*.xml" | head -n 1)
+
+    if [ -z "${DISK_FILE}" ]; then
+        echo "ERROR: Could not find disk file inside OVA archive for tag ${tag}!"
+        exit 1
+    fi
+
+    echo "4. Renaming extracted disk file '${DISK_FILE}' to '${VMDK_FILE}'..."
+    mv "${DISK_FILE}" "${VMDK_FILE}"
+
+    ABS_VMDK_FILE="$(cd "$(dirname "${VMDK_FILE}")" && pwd)/$(basename "${VMDK_FILE}")"
     ABS_OUTPUT_DIR="$(mkdir -p "${OUTPUT_DIR}" && cd "${OUTPUT_DIR}" && pwd)"
 
-    echo "2. Converting OVA (${ABS_IMAGE_FILE}) to Docker tar archive using ova-to-docker..."
+    echo "5. Converting VMDK (${ABS_VMDK_FILE}) to Docker tar archive using ova-to-docker..."
     (
         cd "${CONVERTER_DIR}"
-        yes "y" | python3 "${CONVERTER_SCRIPT}" --input "${ABS_IMAGE_FILE}" --output "${ABS_OUTPUT_DIR}" || true
+        yes "y" | python3 "${CONVERTER_SCRIPT}" --input "${ABS_VMDK_FILE}" --output "${ABS_OUTPUT_DIR}" || true
     )
 
     TAR_FILE=$(find "${OUTPUT_DIR}" -name "*.tar.gz" -o -name "*.tar" | head -n 1)
@@ -93,11 +109,11 @@ while read -r tag url || [ -n "$tag" ]; do
 
     FULL_IMAGE_TAG="${IMAGE_NAME}:${tag}"
 
-    echo "3. Importing rootfs into Docker as ${FULL_IMAGE_TAG}..."
+    echo "6. Importing rootfs into Docker as ${FULL_IMAGE_TAG}..."
     docker import "${TAR_FILE}" "${FULL_IMAGE_TAG}"
 
     if [ "${TEST_VERSION:-true}" = "true" ]; then
-        echo "4. Verifying container functionality and release version..."
+        echo "7. Verifying container functionality and release version..."
         RELEASE_INFO=$(docker run --rm "${FULL_IMAGE_TAG}" cat /etc/oracle-release || docker run --rm "${FULL_IMAGE_TAG}" cat /etc/os-release)
         echo "$RELEASE_INFO"
 
@@ -110,14 +126,14 @@ while read -r tag url || [ -n "$tag" ]; do
     fi
 
     if [ "${PUSH_TO_DOCKERHUB:-false}" = "true" ]; then
-        echo "5. Pushing image to Docker Hub..."
+        echo "8. Pushing image to Docker Hub..."
         docker push "${FULL_IMAGE_TAG}"
     else
-        echo "5. Skipping Docker Hub push (PUSH_TO_DOCKERHUB is not set to 'true')."
+        echo "8. Skipping Docker Hub push (PUSH_TO_DOCKERHUB is not set to 'true')."
     fi
 
-    echo "6. Cleaning up temporary files..."
-    rm -rf "${IMAGE_FILE}" "${OUTPUT_DIR}"
+    echo "9. Cleaning up temporary files..."
+    rm -rf "${DOWNLOADED_OVA}" "${UNPACK_DIR}" "${VMDK_FILE}" "${OUTPUT_DIR}"
 
     echo "Successfully completed processing for tag ${tag}!"
     echo
