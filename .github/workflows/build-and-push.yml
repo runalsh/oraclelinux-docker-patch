@@ -33,4 +33,5 @@ jobs:
           TEST_VERSION: 'true'
           PUSH_TO_DOCKERHUB: 'true'
           CLEANUP_DOCKER_IMAGES: 'true'
+          SKIP_EXISTS_CHECK: 'false'
         run: ./build.sh
