@@ -1,6 +1,6 @@
 # Oracle Linux Docker Patch Images
 
-Automated build of Docker images for exact Oracle Linux point releases (**8.10**, **9.0** .. **9.8**) converted from official QCOW/QCOW2 templates directly into **`runalsh/oraclelinux-patch`**.
+Automated build of Docker images for exact Oracle Linux point releases (**8.10**, **9.0** .. **9.8**) converted from official QCOW/QCOW2 templates directly into **`runalsh/oraclelinux-patch`** and **`ghcr.io/runalsh/oraclelinux-patch`**.
 
 ---
 
@@ -26,42 +26,50 @@ This repository addresses the problem by:
 - Dynamically detecting root file systems by verifying `/etc/oracle-release` or `/etc/os-release`.
 - Generating SPDX SBOM files and scanning for vulnerabilities using **Trivy** without blocking the pipeline.
 - Exporting container rootfs archives and importing them into Docker.
-- Automatically publishing ready-to-use Docker images to Docker Hub: **`runalsh/oraclelinux-patch`**.
+- Automatically publishing ready-to-use Docker images to **Docker Hub** (`runalsh/oraclelinux-patch`) and **GitHub Container Registry** (`ghcr.io/runalsh/oraclelinux-patch`).
 
 ---
 
-## 📦 Available Images and Tags
+## 📦 Available Images and Registries
 
 ### Oracle Linux 8
 
-| Tag | Version in `/etc/oracle-release` | Download QCOW/QCOW2 Template |
-|---|---|---|
-| `runalsh/oraclelinux-patch:8.10` | `Oracle Linux Server release 8.10` | `OL8U10_x86_64-kvm-b287.qcow2` |
+| Tag | OS Version | Docker Hub Image Link | GHCR Image Link |
+|---|---|---|---|
+| `8.10` | `Oracle Linux 8.10` | [`runalsh/oraclelinux-patch:8.10`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:8.10`](https://github.com/runalsh/oraclelinux-docker-patch/pkgs/container/oraclelinux-patch) |
 
 ### Oracle Linux 9
 
-| Tag | Version in `/etc/oracle-release` | Download QCOW/QCOW2 Template |
-|---|---|---|
-| `runalsh/oraclelinux-patch:9.0` | `Oracle Linux Server release 9.0` | `OL9U0_x86_64-kvm-b138.qcow` |
-| `runalsh/oraclelinux-patch:9.1` | `Oracle Linux Server release 9.1` | `OL9U1_x86_64-kvm-b158.qcow` |
-| `runalsh/oraclelinux-patch:9.2` | `Oracle Linux Server release 9.2` | `OL9U2_x86_64-kvm-b197.qcow` |
-| `runalsh/oraclelinux-patch:9.3` | `Oracle Linux Server release 9.3` | `OL9U3_x86_64-kvm-b211.qcow` |
-| `runalsh/oraclelinux-patch:9.4` | `Oracle Linux Server release 9.4` | `OL9U4_x86_64-kvm-b234.qcow2` |
-| `runalsh/oraclelinux-patch:9.5` | `Oracle Linux Server release 9.5` | `OL9U5_x86_64-kvm-b259.qcow2` |
-| `runalsh/oraclelinux-patch:9.6` | `Oracle Linux Server release 9.6` | `OL9U6_x86_64-kvm-b265.qcow2` |
-| `runalsh/oraclelinux-patch:9.7` | `Oracle Linux Server release 9.7` | `OL9U7_x86_64-kvm-b289.qcow2` |
-| `runalsh/oraclelinux-patch:9.8` | `Oracle Linux Server release 9.8` | `OL9U8_x86_64-kvm-b293.qcow2` |
+| Tag | OS Version | Docker Hub Image Link | GHCR Image Link |
+|---|---|---|---|
+| `9.0` | `Oracle Linux 9.0` | [`runalsh/oraclelinux-patch:9.0`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.0`](https://github.com/runalsh/oraclelinux-docker-patch/pkgs/container/oraclelinux-patch) |
+| `9.1` | `Oracle Linux 9.1` | [`runalsh/oraclelinux-patch:9.1`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.1`](https://github.com/runalsh/oraclelinux-docker-patch/pkgs/container/oraclelinux-patch) |
+| `9.2` | `Oracle Linux 9.2` | [`runalsh/oraclelinux-patch:9.2`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.2`](https://github.com/runalsh/oraclelinux-docker-patch/pkgs/container/oraclelinux-patch) |
+| `9.3` | `Oracle Linux 9.3` | [`runalsh/oraclelinux-patch:9.3`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.3`](https://github.com/runalsh/oraclelinux-docker-patch/pkgs/container/oraclelinux-patch) |
+| `9.4` | `Oracle Linux 9.4` | [`runalsh/oraclelinux-patch:9.4`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.4`](https://github.com/runalsh/oraclelinux-docker-patch/pkgs/container/oraclelinux-patch) |
+| `9.5` | `Oracle Linux 9.5` | [`runalsh/oraclelinux-patch:9.5`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.5`](https://github.com/runalsh/oraclelinux-docker-patch/pkgs/container/oraclelinux-patch) |
+| `9.6` | `Oracle Linux 9.6` | [`runalsh/oraclelinux-patch:9.6`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.6`](https://github.com/runalsh/oraclelinux-docker-patch/pkgs/container/oraclelinux-patch) |
+| `9.7` | `Oracle Linux 9.7` | [`runalsh/oraclelinux-patch:9.7`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.7`](https://github.com/runalsh/oraclelinux-docker-patch/pkgs/container/oraclelinux-patch) |
+| `9.8` | `Oracle Linux 9.8` | [`runalsh/oraclelinux-patch:9.8`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.8`](https://github.com/runalsh/oraclelinux-docker-patch/pkgs/container/oraclelinux-patch) |
 
 ---
 
 ## 🛠 Quick Start
 
-### Using pre-built images from Docker Hub
+### Docker Hub
 
 ```bash
 docker run --rm -it runalsh/oraclelinux-patch:8.10 cat /etc/oracle-release
 docker run --rm -it runalsh/oraclelinux-patch:9.5 cat /etc/oracle-release
 docker run --rm -it runalsh/oraclelinux-patch:9.8 cat /etc/oracle-release
+```
+
+### GitHub Container Registry (GHCR)
+
+```bash
+docker run --rm -it ghcr.io/runalsh/oraclelinux-patch:8.10 cat /etc/oracle-release
+docker run --rm -it ghcr.io/runalsh/oraclelinux-patch:9.5 cat /etc/oracle-release
+docker run --rm -it ghcr.io/runalsh/oraclelinux-patch:9.8 cat /etc/oracle-release
 ```
 
 ### Local Build
@@ -72,7 +80,7 @@ To convert and import all versions locally:
 
 ```bash
 chmod +x build.sh
-TEST_VERSION=true PUSH_TO_DOCKERHUB=false ./build.sh
+TEST_VERSION=true PUSH_TO_DOCKERHUB=false PUSH_TO_GHCR=false ./build.sh
 ```
 
 ---
@@ -85,8 +93,9 @@ The `build.sh` script supports the following configuration environment variables
 |---|---|---|
 | `TEST_VERSION` | `true` | When set to `true`, verifies container functionality and validates `/etc/oracle-release` after import. |
 | `PUSH_TO_DOCKERHUB` | `false` | When set to `true`, automatically pushes built images to Docker Hub (`runalsh/oraclelinux-patch:<tag>`). |
-| `CLEANUP_DOCKER_IMAGES` | `false` | When set to `true`, deletes the local Docker image (`docker rmi`) after build and push to conserve disk space. |
-| `SKIP_EXISTS_CHECK` | `false` | When set to `false`, checks if the image tag already exists on Docker Hub and skips download/conversion if present. Set to `true` to force building all tags regardless of Docker Hub status. |
+| `PUSH_TO_GHCR` | `false` | When set to `true`, automatically pushes built images to GitHub Packages / GHCR (`ghcr.io/runalsh/oraclelinux-patch:<tag>`). |
+| `CLEANUP_DOCKER_IMAGES` | `false` | When set to `true`, deletes local Docker images (`docker rmi`) after build and push to conserve disk space. |
+| `SKIP_EXISTS_CHECK` | `false` | When set to `false`, checks if the image tag already exists and skips download/conversion if present. Set to `true` to force building all tags regardless of remote registry status. |
 | `ENABLE_TRIVY_SCAN` | `false` | When set to `true` (or when `trivy` binary is present), generates SPDX SBOM reports (`trivy-reports/sbom-<tag>.json`) and logs vulnerabilities to stdout without failing the build pipeline (`--exit-code 0`). |
 
 ---
@@ -104,7 +113,7 @@ During build execution, images are scanned using [Trivy](https://github.com/aqua
 ```text
 .
 ├── .github/workflows/
-│   └── build-and-push.yml  # Automated CI pipeline for building, testing, scanning, and pushing to Docker Hub
+│   └── build-and-push.yml  # Automated CI pipeline for building, testing, scanning, and pushing to Docker Hub & GHCR
 ├── build.sh                 # Script for downloading QCOW/QCOW2 images, converting via qemu-nbd, verifying, and pushing
 ├── releases.txt             # Registry of URLs with QCOW/QCOW2 versions
 └── README.md                # Project documentation
@@ -117,3 +126,4 @@ During build execution, images are scanned using [Trivy](https://github.com/aqua
 The CI workflow requires the following secrets in GitHub Secrets:
 - `DOCKERHUB_USERNAME`: Your Docker Hub username (`runalsh`)
 - `DOCKERHUB_TOKEN`: Docker Hub Personal Access Token
+- `${{ secrets.GITHUB_TOKEN }}`: Automatically provided by GitHub for GHCR publishing
