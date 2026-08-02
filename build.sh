@@ -46,6 +46,15 @@ while read -r tag url || [ -n "$tag" ]; do
     GHCR_IMAGE_NAME="ghcr.io/$(echo "${IMAGE_NAME}" | tr '[:upper:]' '[:lower:]')"
     FULL_GHCR_TAG="${GHCR_IMAGE_NAME}:${tag}"
 
+    MAJOR_VER="${tag%%.*}"
+    LATEST_IN_TRACK=$(grep -E "^${MAJOR_VER}\." "$RELEASES_FILE" | sort -V | tail -n 1 | awk '{print $1}')
+    
+    IS_LATEST_MAJOR=false
+    if [ "$tag" = "$LATEST_IN_TRACK" ]; then
+        IS_LATEST_MAJOR=true
+        echo "Tag ${tag} is the latest for major version ${MAJOR_VER}. Will also tag as major tag ${MAJOR_VER}!"
+    fi
+
     NEEDS_DOCKERHUB_PUSH=false
     NEEDS_GHCR_PUSH=false
 
@@ -168,6 +177,12 @@ while read -r tag url || [ -n "$tag" ]; do
     if [ "${NEEDS_DOCKERHUB_PUSH}" = "true" ] || [ "${PUSH_TO_DOCKERHUB:-false}" = "true" ]; then
         echo "9. Pushing image to Docker Hub (${FULL_IMAGE_TAG})..."
         docker push "${FULL_IMAGE_TAG}" || true
+        if [ "$IS_LATEST_MAJOR" = "true" ]; then
+            MAJOR_TAG="${IMAGE_NAME}:${MAJOR_VER}"
+            echo "Pushing major alias tag to Docker Hub (${MAJOR_TAG})..."
+            docker tag "${FULL_IMAGE_TAG}" "${MAJOR_TAG}"
+            docker push "${MAJOR_TAG}" || true
+        fi
     else
         echo "9. Skipping Docker Hub push."
     fi
@@ -176,6 +191,15 @@ while read -r tag url || [ -n "$tag" ]; do
         echo "10. Pushing image to GitHub Packages / GHCR (${FULL_GHCR_TAG})..."
         docker tag "${FULL_IMAGE_TAG}" "${FULL_GHCR_TAG}"
         docker push "${FULL_GHCR_TAG}" || true
+        if [ "$IS_LATEST_MAJOR" = "true" ]; then
+            GHCR_MAJOR_TAG="${GHCR_IMAGE_NAME}:${MAJOR_VER}"
+            echo "Pushing major alias tag to GHCR (${GHCR_MAJOR_TAG})..."
+            docker tag "${FULL_IMAGE_TAG}" "${GHCR_MAJOR_TAG}"
+            docker push "${GHCR_MAJOR_TAG}" || true
+            if [ "${CLEANUP_DOCKER_IMAGES:-false}" = "true" ]; then
+                docker rmi -f "${GHCR_MAJOR_TAG}" 2>/dev/null || true
+            fi
+        fi
         if [ "${CLEANUP_DOCKER_IMAGES:-false}" = "true" ]; then
             docker rmi -f "${FULL_GHCR_TAG}" 2>/dev/null || true
         fi
