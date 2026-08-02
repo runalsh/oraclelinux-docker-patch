@@ -1,4 +1,4 @@
-name: Build and Push Oracle Linux Patch Images to DockerHub
+name: Build and Push Oracle Linux Patch Images to DockerHub and GHCR
 
 on:
   push:
@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       skip_exists_check:
-        description: 'Skip Docker Hub existence check and force rebuild/overwrite all images'
+        description: 'Skip existence check and force rebuild/overwrite all images'
         type: boolean
         required: false
         default: false
@@ -20,6 +20,9 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,6 +43,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Log in to GitHub Container Registry (GHCR)
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Make build script executable
         run: chmod +x build.sh
 
@@ -47,6 +58,7 @@ jobs:
         env:
           TEST_VERSION: 'true'
           PUSH_TO_DOCKERHUB: 'true'
+          PUSH_TO_GHCR: 'true'
           CLEANUP_DOCKER_IMAGES: 'true'
           SKIP_EXISTS_CHECK: ${{ inputs.skip_exists_check || 'false' }}
           ENABLE_TRIVY_SCAN: 'true'
