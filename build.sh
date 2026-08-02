@@ -167,11 +167,9 @@ while read -r tag url || [ -n "$tag" ]; do
     fi
 
     if command -v trivy &>/dev/null || [ "${ENABLE_TRIVY_SCAN:-false}" = "true" ]; then
-        echo "8. Generating SBOM and scanning vulnerabilities with Trivy..."
+        echo "8. Generating Trivy SBOM and vulnerability files (silent console)..."
         trivy image --format spdx-json --output "trivy-reports/sbom-${tag}.json" "${FULL_IMAGE_TAG}" 2>/dev/null || true
-        echo "--- Trivy Vulnerability Report for ${FULL_IMAGE_TAG} ---"
-        trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL "${FULL_IMAGE_TAG}" || true
-        echo "--------------------------------------------------------"
+        trivy image --format json --output "trivy-reports/vulnerabilities-${tag}.json" "${FULL_IMAGE_TAG}" 2>/dev/null || true
     fi
 
     if [ "${NEEDS_DOCKERHUB_PUSH}" = "true" ] || [ "${PUSH_TO_DOCKERHUB:-false}" = "true" ]; then
