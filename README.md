@@ -34,23 +34,23 @@ This repository addresses the problem by:
 
 ### Oracle Linux 8
 
-| Tag | OS Version | Docker Hub Image Link | GHCR Image Link |
+| Tag | OS Version | Docker Hub Image Link | GHCR Package Link |
 |---|---|---|---|
-| `8.10` | `Oracle Linux 8.10` | [`runalsh/oraclelinux-patch:8.10`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:8.10`](https://github.com/runalsh/oraclelinux-docker-patch/pkgs/container/oraclelinux-patch) |
+| `8.10` | `Oracle Linux 8.10` | [`runalsh/oraclelinux-patch:8.10`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:8.10`](https://github.com/users/runalsh/packages/container/package/oraclelinux-patch) |
 
 ### Oracle Linux 9
 
-| Tag | OS Version | Docker Hub Image Link | GHCR Image Link |
+| Tag | OS Version | Docker Hub Image Link | GHCR Package Link |
 |---|---|---|---|
-| `9.0` | `Oracle Linux 9.0` | [`runalsh/oraclelinux-patch:9.0`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.0`](https://github.com/runalsh/oraclelinux-docker-patch/pkgs/container/oraclelinux-patch) |
-| `9.1` | `Oracle Linux 9.1` | [`runalsh/oraclelinux-patch:9.1`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.1`](https://github.com/runalsh/oraclelinux-docker-patch/pkgs/container/oraclelinux-patch) |
-| `9.2` | `Oracle Linux 9.2` | [`runalsh/oraclelinux-patch:9.2`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.2`](https://github.com/runalsh/oraclelinux-docker-patch/pkgs/container/oraclelinux-patch) |
-| `9.3` | `Oracle Linux 9.3` | [`runalsh/oraclelinux-patch:9.3`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.3`](https://github.com/runalsh/oraclelinux-docker-patch/pkgs/container/oraclelinux-patch) |
-| `9.4` | `Oracle Linux 9.4` | [`runalsh/oraclelinux-patch:9.4`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.4`](https://github.com/runalsh/oraclelinux-docker-patch/pkgs/container/oraclelinux-patch) |
-| `9.5` | `Oracle Linux 9.5` | [`runalsh/oraclelinux-patch:9.5`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.5`](https://github.com/runalsh/oraclelinux-docker-patch/pkgs/container/oraclelinux-patch) |
-| `9.6` | `Oracle Linux 9.6` | [`runalsh/oraclelinux-patch:9.6`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.6`](https://github.com/runalsh/oraclelinux-docker-patch/pkgs/container/oraclelinux-patch) |
-| `9.7` | `Oracle Linux 9.7` | [`runalsh/oraclelinux-patch:9.7`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.7`](https://github.com/runalsh/oraclelinux-docker-patch/pkgs/container/oraclelinux-patch) |
-| `9.8` | `Oracle Linux 9.8` | [`runalsh/oraclelinux-patch:9.8`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.8`](https://github.com/runalsh/oraclelinux-docker-patch/pkgs/container/oraclelinux-patch) |
+| `9.0` | `Oracle Linux 9.0` | [`runalsh/oraclelinux-patch:9.0`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.0`](https://github.com/users/runalsh/packages/container/package/oraclelinux-patch) |
+| `9.1` | `Oracle Linux 9.1` | [`runalsh/oraclelinux-patch:9.1`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.1`](https://github.com/users/runalsh/packages/container/package/oraclelinux-patch) |
+| `9.2` | `Oracle Linux 9.2` | [`runalsh/oraclelinux-patch:9.2`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.2`](https://github.com/users/runalsh/packages/container/package/oraclelinux-patch) |
+| `9.3` | `Oracle Linux 9.3` | [`runalsh/oraclelinux-patch:9.3`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.3`](https://github.com/users/runalsh/packages/container/package/oraclelinux-patch) |
+| `9.4` | `Oracle Linux 9.4` | [`runalsh/oraclelinux-patch:9.4`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.4`](https://github.com/users/runalsh/packages/container/package/oraclelinux-patch) |
+| `9.5` | `Oracle Linux 9.5` | [`runalsh/oraclelinux-patch:9.5`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.5`](https://github.com/users/runalsh/packages/container/package/oraclelinux-patch) |
+| `9.6` | `Oracle Linux 9.6` | [`runalsh/oraclelinux-patch:9.6`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.6`](https://github.com/users/runalsh/packages/container/package/oraclelinux-patch) |
+| `9.7` | `Oracle Linux 9.7` | [`runalsh/oraclelinux-patch:9.7`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.7`](https://github.com/users/runalsh/packages/container/package/oraclelinux-patch) |
+| `9.8` | `Oracle Linux 9.8` | [`runalsh/oraclelinux-patch:9.8`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.8`](https://github.com/users/runalsh/packages/container/package/oraclelinux-patch) |
 
 ---
 
