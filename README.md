@@ -1,6 +1,6 @@
 # Oracle Linux Docker Patch Images
 
-Automated build of Docker images for exact Oracle Linux point releases (**8.10**, **9.0** .. **9.8**) converted from official QCOW/QCOW2 templates directly into **`runalsh/oraclelinux-patch`** and **`ghcr.io/runalsh/oraclelinux-patch`**.
+Automated build of Docker images for exact Oracle Linux point releases (**8.10**, **9.0** .. **9.8**, **10.0**, **10.1**) converted from official QCOW/QCOW2 templates directly into **`runalsh/oraclelinux-patch`** and **`ghcr.io/runalsh/oraclelinux-patch`**.
 
 ---
 
@@ -8,10 +8,10 @@ Automated build of Docker images for exact Oracle Linux point releases (**8.10**
 
 The official Docker Hub registry (`library/oraclelinux`) publishes **only major tags** (e.g., `oraclelinux:8`, `oraclelinux:9`, `latest`).
 
-Official tags like `oraclelinux:8.10` or `oraclelinux:9.5` **do not exist** or are continuously updated with newer packages.
+Official tags like `oraclelinux:8.10`, `oraclelinux:9.5`, or `oraclelinux:10.1` **do not exist** or are continuously updated with newer packages.
 
 ### Key Issues:
-1. **Testing on specific distribution patch versions**: Impossibility of running tests or simulating environments locked to a specific point release (e.g., `8.10`, `9.5`).
+1. **Testing on specific distribution patch versions**: Impossibility of running tests or simulating environments locked to a specific point release (e.g., `8.10`, `9.5`, `10.1`).
 2. **Build Reproducibility**: The base `oraclelinux:9` image changes over time as packages are updated, which can alter software behavior.
 3. **Security Audits & Forensics**: Difficulty in reproducing system environments as they existed at a specific point release date.
 
@@ -52,6 +52,13 @@ This repository addresses the problem by:
 | `9.7` | `Oracle Linux 9.7` | [`runalsh/oraclelinux-patch:9.7`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.7`](https://github.com/users/runalsh/packages/container/package/oraclelinux-patch) |
 | `9.8` | `Oracle Linux 9.8` | [`runalsh/oraclelinux-patch:9.8`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:9.8`](https://github.com/users/runalsh/packages/container/package/oraclelinux-patch) |
 
+### Oracle Linux 10
+
+| Tag | OS Version | Docker Hub Image Link | GHCR Package Link |
+|---|---|---|---|
+| `10.0` | `Oracle Linux 10.0` | [`runalsh/oraclelinux-patch:10.0`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:10.0`](https://github.com/users/runalsh/packages/container/package/oraclelinux-patch) |
+| `10.1` | `Oracle Linux 10.1` | [`runalsh/oraclelinux-patch:10.1`](https://hub.docker.com/r/runalsh/oraclelinux-patch/tags) | [`ghcr.io/runalsh/oraclelinux-patch:10.1`](https://github.com/users/runalsh/packages/container/package/oraclelinux-patch) |
+
 ---
 
 ## 🛠 Quick Start
@@ -61,7 +68,7 @@ This repository addresses the problem by:
 ```bash
 docker run --rm -it runalsh/oraclelinux-patch:8.10 cat /etc/oracle-release
 docker run --rm -it runalsh/oraclelinux-patch:9.5 cat /etc/oracle-release
-docker run --rm -it runalsh/oraclelinux-patch:9.8 cat /etc/oracle-release
+docker run --rm -it runalsh/oraclelinux-patch:10.1 cat /etc/oracle-release
 ```
 
 ### GitHub Container Registry (GHCR)
@@ -69,7 +76,7 @@ docker run --rm -it runalsh/oraclelinux-patch:9.8 cat /etc/oracle-release
 ```bash
 docker run --rm -it ghcr.io/runalsh/oraclelinux-patch:8.10 cat /etc/oracle-release
 docker run --rm -it ghcr.io/runalsh/oraclelinux-patch:9.5 cat /etc/oracle-release
-docker run --rm -it ghcr.io/runalsh/oraclelinux-patch:9.8 cat /etc/oracle-release
+docker run --rm -it ghcr.io/runalsh/oraclelinux-patch:10.1 cat /etc/oracle-release
 ```
 
 ### Local Build
