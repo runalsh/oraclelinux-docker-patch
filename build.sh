@@ -154,11 +154,11 @@ while read -r tag url || [ -n "$tag" ]; do
     echo "4. Mounting root filesystem..."
     sudo mount "${ROOT_DEV}" "${MOUNT_DIR}"
 
-    echo "5. Creating rootfs tar archive..."
-    sudo tar -C "${MOUNT_DIR}" -czf "${TAR_FILE}" .
+    echo "5. Creating optimized rootfs tar archive (excluding kernel, modules, firmware, grub, caches, docs)..."
+    sudo tar -C "${MOUNT_DIR}"         --exclude="./usr/lib/modules"         --exclude="./lib/modules"         --exclude="./boot/vmlinuz*"         --exclude="./boot/initramfs*"         --exclude="./boot/System.map*"         --exclude="./usr/lib/firmware"         --exclude="./lib/firmware"         --exclude="./usr/lib/grub*"         --exclude="./boot/grub*"         --exclude="./etc/grub.d"         --exclude="./usr/share/GeoIP"         --exclude="./var/cache/dnf/*"         --exclude="./var/cache/yum/*"         --exclude="./usr/share/doc/*"         --exclude="./usr/share/man/*"         --exclude="./usr/share/info/*"         --exclude="./tmp/*"         --exclude="./var/log/*"         --exclude="./var/tmp/*"         -czf "${TAR_FILE}" .
 
     echo "6. Importing rootfs into Docker as ${FULL_IMAGE_TAG}..."
-    docker import "${TAR_FILE}" "${FULL_IMAGE_TAG}"
+    docker import       -c 'ENV container=docker'       -c 'ENV LANG=en_US.UTF-8'       -c 'CMD ["/bin/bash"]'       "${TAR_FILE}" "${FULL_IMAGE_TAG}"
 
     if [ "${TEST_VERSION:-true}" = "true" ]; then
         echo "7. Verifying container functionality and release version..."
@@ -194,11 +194,11 @@ while read -r tag url || [ -n "$tag" ]; do
             echo "Pushing major alias tag to GHCR (${GHCR_MAJOR_TAG})..."
             docker tag "${FULL_IMAGE_TAG}" "${GHCR_MAJOR_TAG}"
             docker push "${GHCR_MAJOR_TAG}" || true
-            if [ "${CLEANUP_DOCKER_IMAGES:-false}" = "true" ]; then
+            if [ "${CLEANUP_DOCKER_IMAGES:-true}" = "true" ]; then
                 docker rmi -f "${GHCR_MAJOR_TAG}" 2>/dev/null || true
             fi
         fi
-        if [ "${CLEANUP_DOCKER_IMAGES:-false}" = "true" ]; then
+        if [ "${CLEANUP_DOCKER_IMAGES:-true}" = "true" ]; then
             docker rmi -f "${FULL_GHCR_TAG}" 2>/dev/null || true
         fi
     else
@@ -211,7 +211,7 @@ while read -r tag url || [ -n "$tag" ]; do
     sudo qemu-nbd -d /dev/nbd0 2>/dev/null || true
     sudo rm -rf "${QCOW_FILE}" "${TAR_FILE}" "${MOUNT_DIR}"
 
-    if [ "${CLEANUP_DOCKER_IMAGES:-false}" = "true" ]; then
+    if [ "${CLEANUP_DOCKER_IMAGES:-true}" = "true" ]; then
         echo "Removing local Docker image ${FULL_IMAGE_TAG} to save disk space..."
         docker rmi -f "${FULL_IMAGE_TAG}" 2>/dev/null || true
     fi

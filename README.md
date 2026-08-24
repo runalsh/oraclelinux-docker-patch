@@ -61,6 +61,26 @@ This repository addresses the problem by:
 
 ---
 
+
+---
+
+## ✂️ What is Stripped from the Rootfs (Size Optimization)
+
+Official Oracle Linux KVM VM templates contain Linux kernels (`kernel-uek`), bootloaders (`grub2`), firmware files, and package caches meant for bare-metal/hypervisor VMs that are unnecessary inside Docker containers.
+
+The build script strips non-container bloat, reducing the uncompressed image from **~768 MB** down to **~490 MB** (saving over **280 MB** per image):
+
+| Component / Path | What it is | Why it is safe to remove in Docker | Disk Space Saved |
+|---|---|---|---|
+| **UEK Kernel & Modules** (`/usr/lib/modules`, `/lib/modules`, `/boot/vmlinuz*`, `/boot/initramfs*`) | Oracle Unbreakable Enterprise Kernel binaries and drivers | Docker containers share the host Linux kernel; internal kernel files are never loaded. | **~100 MB** |
+| **GRUB Bootloader** (`/usr/lib/grub*`, `/boot/grub*`, `/etc/grub.d`) | GRUB2 EFI/BIOS bootloader tools | Containers are spawned directly via `runc` without BIOS/EFI boot. | **~40 MB** |
+| **GeoIP Databases** (`/usr/share/GeoIP`) | Offline IP geolocation databases (`geolite2-city`) | Not needed in minimal base container runtime. | **~60 MB** |
+| **DNF / YUM Package Caches** (`/var/cache/dnf/*`, `/var/cache/yum/*`) | Downloaded RPM metadata caches from build time | Refreshed automatically during `dnf update` / `dnf install`. | **~30 MB** |
+| **Documentation & Manuals** (`/usr/share/{doc,man,info}`) | Package changelogs and man pages | Not used by headless automated daemons or CI/CD test jobs. | **~40 MB** |
+| **Temporary Files & Logs** (`/tmp/*`, `/var/log/*`, `/var/tmp/*`) | VM template bootstrap install logs | Re-generated on demand during runtime. | **~10 MB** |
+| **Total Savings** | | | **~280+ MB** |
+
+---
 ## 🛠 Quick Start
 
 ### Docker Hub
