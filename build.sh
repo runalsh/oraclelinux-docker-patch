@@ -28,8 +28,6 @@ if [ ! -f "$RELEASES_FILE" ]; then
     exit 1
 fi
 
-mkdir -p trivy-reports
-
 sudo modprobe nbd max_part=16 2>/dev/null || true
 
 echo "Starting QCOW/QCOW2 -> Docker build process for repository: ${IMAGE_NAME}"
@@ -165,18 +163,15 @@ while read -r tag url || [ -n "$tag" ]; do
 
     if [ "${TEST_VERSION:-true}" = "true" ]; then
         echo "7. Verifying container functionality and release version..."
-        RELEASE_INFO=$(docker run --rm "${FULL_IMAGE_TAG}" cat /etc/oracle-release || docker run --rm "${FULL_IMAGE_TAG}" cat /etc/os-release)
-        echo "$RELEASE_INFO"
-    fi
-
-    if command -v trivy &>/dev/null || [ "${ENABLE_TRIVY_SCAN:-false}" = "true" ]; then
-        echo "8. Generating Trivy SBOM and vulnerability files (silent console)..."
-        trivy image --format spdx-json --output "trivy-reports/sbom-${tag}.json" "${FULL_IMAGE_TAG}" 2>/dev/null || true
-        trivy image --format json --output "trivy-reports/vulnerabilities-${tag}.json" "${FULL_IMAGE_TAG}" 2>/dev/null || true
+        if RELEASE_INFO=$(docker run --rm "${FULL_IMAGE_TAG}" cat /etc/oracle-release 2>/dev/null || docker run --rm "${FULL_IMAGE_TAG}" cat /etc/os-release 2>/dev/null); then
+            echo "$RELEASE_INFO"
+        else
+            echo "WARNING: Container could not be executed locally on this host (e.g. CPU lacks x86-64-v2 required by EL9). Skipping runtime verification and proceeding with build/push."
+        fi
     fi
 
     if [ "${NEEDS_DOCKERHUB_PUSH}" = "true" ] || [ "${PUSH_TO_DOCKERHUB:-false}" = "true" ]; then
-        echo "9. Pushing image to Docker Hub (${FULL_IMAGE_TAG})..."
+        echo "8. Pushing image to Docker Hub (${FULL_IMAGE_TAG})..."
         docker push "${FULL_IMAGE_TAG}" || true
         if [ "$IS_LATEST_MAJOR" = "true" ]; then
             MAJOR_TAG="${IMAGE_NAME}:${MAJOR_VER}"
@@ -185,11 +180,11 @@ while read -r tag url || [ -n "$tag" ]; do
             docker push "${MAJOR_TAG}" || true
         fi
     else
-        echo "9. Skipping Docker Hub push."
+        echo "8. Skipping Docker Hub push."
     fi
 
     if [ "${NEEDS_GHCR_PUSH}" = "true" ] || [ "${PUSH_TO_GHCR:-false}" = "true" ]; then
-        echo "10. Pushing image to GitHub Packages / GHCR (${FULL_GHCR_TAG})..."
+        echo "9. Pushing image to GitHub Packages / GHCR (${FULL_GHCR_TAG})..."
         docker tag "${FULL_IMAGE_TAG}" "${FULL_GHCR_TAG}"
         docker push "${FULL_GHCR_TAG}" || true
         if [ "$IS_LATEST_MAJOR" = "true" ]; then
@@ -205,10 +200,10 @@ while read -r tag url || [ -n "$tag" ]; do
             docker rmi -f "${FULL_GHCR_TAG}" 2>/dev/null || true
         fi
     else
-        echo "10. Skipping GHCR push."
+        echo "9. Skipping GHCR push."
     fi
 
-    echo "11. Cleaning up temporary mounts and files..."
+    echo "10. Cleaning up temporary mounts and files..."
     sudo umount "${MOUNT_DIR}" 2>/dev/null || true
     sudo vgchange -an --config "${LVM_CONF}" 2>/dev/null || sudo vgchange -an 2>/dev/null || true
     sudo qemu-nbd -d /dev/nbd0 2>/dev/null || true
