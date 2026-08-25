@@ -18,8 +18,45 @@ on:
         default: false
 
 jobs:
-  build-and-push:
+  select-runner:
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      runner_type: ${{ steps.check.outputs.runner_type }}
+    steps:
+      - name: Check if phylex runner is online
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GH_PAT || secrets.PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          RESPONSE=$(gh api "repos/${{ github.repository }}/actions/runners" 2>/dev/null || true)
+          STATUS=$(echo "$RESPONSE" | jq -r '.runners[]? | select(.name=="phylex") | .status' 2>/dev/null || echo "offline")
+          
+          # If not found at repo level, check org/user level if PAT is available
+          if [ -z "$STATUS" ] || [ "$STATUS" = "null" ]; then
+            STATUS="offline"
+          fi
+
+          if [ "$STATUS" = "online" ]; then
+            echo "Runner phylex is ONLINE."
+            HAS_LABEL=$(echo "$RESPONSE" | jq -r '.runners[] | select(.name=="phylex") | .labels[]? | select(.name=="phylex") | .name' 2>/dev/null || true)
+            if [ "$HAS_LABEL" = "phylex" ]; then
+              echo "Using labels: ['self-hosted', 'phylex']"
+              echo 'runner_type=["self-hosted", "phylex"]' >> "$GITHUB_OUTPUT"
+            else
+              echo "Using label: ['self-hosted']"
+              echo 'runner_type=["self-hosted"]' >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "Runner phylex is not available ($STATUS). Falling back to ubuntu-latest."
+            echo 'runner_type=["ubuntu-latest"]' >> "$GITHUB_OUTPUT"
+          fi
+
+  build-and-push:
+    needs: select-runner
+    runs-on: ${{ fromJSON(needs.select-runner.outputs.runner_type) }}
     permissions:
       contents: read
       packages: write
