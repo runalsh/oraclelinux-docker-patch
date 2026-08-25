@@ -104,10 +104,12 @@ while read -r tag url || [ -n "$tag" ]; do
     echo "2. Attaching QCOW image to NBD block device..."
     sudo qemu-nbd -c /dev/nbd0 "${QCOW_FILE}"
     sleep 2
+    sudo partprobe /dev/nbd0 2>/dev/null || sudo partx -a /dev/nbd0 2>/dev/null || true
 
     echo "3. Dynamically discovering root partition/volume..."
-    sudo vgscan --mknodes 2>/dev/null || true
-    sudo vgchange -ay 2>/dev/null || true
+    LVM_CONF='devices { filter = [ "a|/dev/nbd.*|", "a|/dev/mapper/.*|", "a|.*|" ] types = [ "nbd", 16 ] }'
+    sudo vgscan --config "${LVM_CONF}" --mknodes 2>/dev/null || true
+    sudo vgchange -ay --config "${LVM_CONF}" 2>/dev/null || true
 
     ROOT_DEV=""
     TEST_MOUNT_POINT="/tmp/check_root_fs"
@@ -115,9 +117,10 @@ while read -r tag url || [ -n "$tag" ]; do
     sudo mkdir -p "${TEST_MOUNT_POINT}"
 
     # Check all LVM logical volumes dynamically
-    for lv in $(sudo lvs --noheadings -o lv_path 2>/dev/null || true); do
-        if sudo mount -o ro "${lv}" "${TEST_MOUNT_POINT}" 2>/dev/null; then
-            if [ -f "${TEST_MOUNT_POINT}/etc/oracle-release" ] || [ -f "${TEST_MOUNT_POINT}/etc/os-release" ]; then
+    for lv in $(sudo lvs --config "${LVM_CONF}" --noheadings -o lv_path 2>/dev/null || true) /dev/mapper/*; do
+        [ -b "${lv}" ] || continue
+        if sudo mount -o ro,nouuid "${lv}" "${TEST_MOUNT_POINT}" 2>/dev/null || sudo mount -o ro "${lv}" "${TEST_MOUNT_POINT}" 2>/dev/null; then
+            if [ -e "${TEST_MOUNT_POINT}/etc/oracle-release" ] || [ -e "${TEST_MOUNT_POINT}/etc/os-release" ] || [ -e "${TEST_MOUNT_POINT}/usr/lib/os-release" ]; then
                 ROOT_DEV="${lv}"
                 sudo umount "${TEST_MOUNT_POINT}"
                 break
@@ -130,8 +133,8 @@ while read -r tag url || [ -n "$tag" ]; do
     if [ -z "${ROOT_DEV}" ]; then
         for part in /dev/nbd0p* /dev/nbd0; do
             [ -b "${part}" ] || continue
-            if sudo mount -o ro "${part}" "${TEST_MOUNT_POINT}" 2>/dev/null; then
-                if [ -f "${TEST_MOUNT_POINT}/etc/oracle-release" ] || [ -f "${TEST_MOUNT_POINT}/etc/os-release" ]; then
+            if sudo mount -o ro,nouuid "${part}" "${TEST_MOUNT_POINT}" 2>/dev/null || sudo mount -o ro "${part}" "${TEST_MOUNT_POINT}" 2>/dev/null; then
+                if [ -e "${TEST_MOUNT_POINT}/etc/oracle-release" ] || [ -e "${TEST_MOUNT_POINT}/etc/os-release" ] || [ -e "${TEST_MOUNT_POINT}/usr/lib/os-release" ]; then
                     ROOT_DEV="${part}"
                     sudo umount "${TEST_MOUNT_POINT}"
                     break
@@ -152,7 +155,7 @@ while read -r tag url || [ -n "$tag" ]; do
     echo "Found root device: ${ROOT_DEV}"
 
     echo "4. Mounting root filesystem..."
-    sudo mount "${ROOT_DEV}" "${MOUNT_DIR}"
+    sudo mount -o ro,nouuid "${ROOT_DEV}" "${MOUNT_DIR}" 2>/dev/null || sudo mount -o ro "${ROOT_DEV}" "${MOUNT_DIR}" 2>/dev/null || sudo mount "${ROOT_DEV}" "${MOUNT_DIR}"
 
     echo "5. Creating optimized rootfs tar archive (excluding kernel, modules, firmware, grub, caches, docs)..."
     sudo tar -C "${MOUNT_DIR}"         --exclude="./usr/lib/modules"         --exclude="./lib/modules"         --exclude="./boot/vmlinuz*"         --exclude="./boot/initramfs*"         --exclude="./boot/System.map*"         --exclude="./usr/lib/firmware"         --exclude="./lib/firmware"         --exclude="./usr/lib/grub*"         --exclude="./boot/grub*"         --exclude="./etc/grub.d"         --exclude="./usr/share/GeoIP"         --exclude="./var/cache/dnf/*"         --exclude="./var/cache/yum/*"         --exclude="./usr/share/doc/*"         --exclude="./usr/share/man/*"         --exclude="./usr/share/info/*"         --exclude="./tmp/*"         --exclude="./var/log/*"         --exclude="./var/tmp/*"         -czf "${TAR_FILE}" .
@@ -207,7 +210,7 @@ while read -r tag url || [ -n "$tag" ]; do
 
     echo "11. Cleaning up temporary mounts and files..."
     sudo umount "${MOUNT_DIR}" 2>/dev/null || true
-    sudo vgchange -an 2>/dev/null || true
+    sudo vgchange -an --config "${LVM_CONF}" 2>/dev/null || sudo vgchange -an 2>/dev/null || true
     sudo qemu-nbd -d /dev/nbd0 2>/dev/null || true
     sudo rm -rf "${QCOW_FILE}" "${TAR_FILE}" "${MOUNT_DIR}"
 
